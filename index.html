@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>デジタル変調シミュレーター</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #fafafa;
+      color: #2c2c2a;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    h1 { font-size: 28px; font-weight: 500; margin-bottom: 0.5rem; }
+    h2 { font-size: 20px; font-weight: 500; margin: 2rem 0 1rem; }
+    h3 { font-size: 16px; font-weight: 500; margin: 1.5rem 0 0.75rem; }
+    h4 { font-size: 14px; font-weight: 500; margin: 1rem 0 0.5rem; color: #3266ad; }
+    
+    .subtitle { font-size: 14px; color: #73726c; margin-bottom: 2rem; }
+    
+    .section {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .glossary {
+      background: #f9f9f9;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .glossary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    
+    .term {
+      background: white;
+      padding: 0.75rem;
+      border-radius: 6px;
+      border-left: 3px solid #3266ad;
+    }
+    
+    .term-name {
+      font-weight: 500;
+      color: #3266ad;
+      margin-bottom: 0.25rem;
+      font-size: 14px;
+    }
+    
+    .term-desc {
+      font-size: 13px;
+      color: #73726c;
+      line-height: 1.5;
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    
+    button {
+      padding: 8px 16px;
+      border: 0.5px solid rgba(0, 0, 0, 0.3);
+      background: transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.15s;
+      color: inherit;
+    }
+    
+    button:hover { background: #f1efe8; }
+    button.active { background: #f1efe8; font-weight: 500; }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 1rem;
+    }
+    
+    .stat-card {
+      background: #f1efe8;
+      border-radius: 8px;
+      padding: 0.75rem;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      color: #73726c;
+      margin-bottom: 4px;
+    }
+    
+    .stat-value {
+      font-size: 20px;
+      font-weight: 500;
+    }
+    
+    .control-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 1rem;
+    }
+    
+    .control-row label {
+      font-size: 14px;
+      color: #73726c;
+      min-width: 140px;
+    }
+    
+    input[type="range"] {
+      flex: 1;
+      height: 4px;
+      border-radius: 2px;
+      background: #e1e1dc;
+      outline: none;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #2c2c2a;
+      cursor: pointer;
+    }
+    
+    input[type="text"] {
+      flex: 1;
+      font-family: 'Monaco', monospace;
+      padding: 8px 12px;
+      border: 0.5px solid rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    
+    .canvas-container {
+      background: #f1efe8;
+      border-radius: 8px;
+      padding: 1rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    
+    .chart-wrapper {
+      position: relative;
+      width: 100%;
+      height: 280px;
+    }
+    
+    .info-box {
+      background: #e6f1fb;
+      border-left: 3px solid #3266ad;
+      padding: 0.75rem;
+      margin-top: 0.5rem;
+      border-radius: 4px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    
+    .subsection {
+      background: #f9f9f9;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .toggle-btn {
+      background: none;
+      border: none;
+      color: #3266ad;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 0.5rem 0;
+      text-decoration: underline;
+    }
+    
+    .toggle-btn:hover {
+      color: #185fa5;
+    }
+    
+    .collapsible {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    
+    .collapsible.open {
+      max-height: 2000px;
+    }
+    
+    @media (max-width: 768px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      .glossary-grid { grid-template-columns: 1fr; }
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      body { background: #1a1a1a; color: #e1e1dc; }
+      .section { background: #2c2c2a; }
+      .subsection, .glossary { background: #3a3a38; }
+      .term { background: #2c2c2a; border-left-color: #85b7eb; }
+      .term-name { color: #85b7eb; }
+      .term-desc { color: #b4b2a9; }
+      button { border-color: rgba(255, 255, 255, 0.3); }
+      button:hover, button.active { background: #3a3a38; }
+      .stat-card, .canvas-container { background: #3a3a38; }
+      .stat-label { color: #b4b2a9; }
+      input[type="range"] { background: #444441; }
+      input[type="range"]::-webkit-slider-thumb { background: #e1e1dc; }
+      input[type="text"] { background: #3a3a38; border-color: rgba(255, 255, 255, 0.3); color: #e1e1dc; }
+      .info-box { background: #0c447c; border-left-color: #85b7eb; color: #b5d4f4; }
+      .toggle-btn { color: #85b7eb; }
+      .toggle-btn:hover { color: #b5d4f4; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>デジタル変調シミュレーター</h1>
+    <p class="subtitle">PSK/QAM変調、ノイズ解析、フィルタリング、同期シミュレーション</p>
+    
+    <div class="section">
+      <h2>📚 用語解説</h2>
+      <button class="toggle-btn" onclick="toggleGlossary()">▼ 専門用語の説明を表示/非表示</button>
+      <div id="glossary" class="collapsible">
+        <div class="glossary-grid">
+          <div class="term">
+            <div class="term-name">PSK（位相偏移変調）</div>
+            <div class="term-desc">Phase Shift Keying。搬送波の位相を変化させてデジタル情報を伝送する方式。BPSK、QPSK、8PSKなどがあります。</div>
+          </div>
+          
+          <div class="term">
+            <div class="term-name">QAM（直交振幅変調）</div>
+            <div class="term-desc">Quadrature Amplitude Modulation。位相と振幅の両方を変化させる変調方式。PSKより高速伝送が可能ですが、ノイズに弱くなります。</div>
+          </div>
+          
+          <div class="term">
+            <div class="term-name">コンスタレーション図</div>
+            <div class="term-desc">シンボルをI/Q平面上に配置した図。各点が1つのシンボル（複数ビット）を表します。点の配置で変調方式の特性が分かります。</div>
+          </div>
+          
+          <div class="term">
+            <div class="term-name">I/Q成分</div>
+            <div class="term-desc">I（In-phase：同相成分）とQ（Quadrature：直交成分）。搬送波と同じ位相の成分がI、90°ずれた位相の成分がQです。</div>
+          </div>
+          
+          <div class="term">
+            <div class="term-name">シンボル</div>
+            <div class="term-desc">1回の変調で送信される情報単位。例えばQPSKでは1シンボル=2ビット、16QAMでは1シンボル=4ビットです。</div>
+          </div>
+          
+          <div class="term">
+            <div class="term-name">SNR（信号対雑音比）</div>
+            <div class="term-desc">Signal-to-Noise Ratio。信号電力とノイズ電力の比をdB（デシベル）で表した値。高いほど通信品質が良好です。</div>
+          </div>
+          
+          <div class="term">
+            <div class="term-name">BER（ビット誤り率）</div>
+            <div class="term-desc">Bit Error Rate。受信したビットのうち、誤って復号されたビットの割合。1e-6（100万ビットに1つの誤り）などと表記します。</div>
+          </div>
+          
+          <div class="term">
+            <div class="term-name">グレイコーディング</div>
+            <div class="term-desc">隣接するシンボルのビット列が1ビットだけ異なるようにマッピングする技術。シンボル誤りが発生してもビット誤りを最小化できます。</div>
+          </div>
+          
+          <div class="term">
+            <div class="term-name">アイダイアグラム</div>
+            <div class="term-desc">複数のシンボル遷移を1シンボル周期で重ね合わせた図。「目（アイ）」の形に見え、開口度で信号品質を判断できます。</div>
+          </div>
+          
+          <div class="term">
+            <div class="term-name">ロールオフフィルタ</div>
+            <div class="term-desc">帯域制限フィルタ。符号間干渉（ISI）を抑制しながら、限られた帯域で効率的に伝送するために使用します。</div>
+          </div>
+          
+          <div class="term">
+            <div class="term-name">位相オフセット</div>
+            <div class="term-desc">送信機と受信機の搬送波位相のずれ。完全に同期していない場合、コンスタレーションが回転します。</div>
+          </div>
+          
+          <div class="term">
+            <div class="term-name">タイミング誤差</div>
+            <div class="term-desc">シンボルのサンプリングタイミングのずれ。理想的にはアイの中心でサンプリングする必要がありますが、誤差があると端でサンプリングしてしまいます。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>変調方式選択</h2>
+      <div class="button-group">
+        <button id="btnBPSK">BPSK</button>
+        <button id="btnQPSK">QPSK</button>
+        <button id="btn8PSK">8PSK</button>
+        <button id="btn16PSK">16PSK</button>
+        <button id="btn16QAM">16QAM</button>
+        <button id="btn32QAM">32QAM</button>
+        <button id="btn64QAM">64QAM</button>
+        <button id="btn128QAM">128QAM</button>
+        <button id="btn256QAM">256QAM</button>
+      </div>
+      
+      <div class="stats-grid">
+        <div class="stat-card">
+          <p class="stat-label">変調方式</p>
+          <p class="stat-value" id="modType">BPSK</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">シンボル数</p>
+          <p class="stat-value" id="numSymbols">2</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">ビット/シンボル</p>
+          <p class="stat-value" id="bitsPerSymbol">1</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">グレイ符号</p>
+          <p class="stat-value" id="grayStatus">OFF</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">SNR (dB)</p>
+          <p class="stat-value" id="snrValue">∞</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">BER</p>
+          <p class="stat-value" id="berValue">0.00</p>
+        </div>
+      </div>
+      
+      <div class="control-row">
+        <label>
+          <input type="checkbox" id="grayCodeToggle"> グレイコーディング使用
+        </label>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>コンスタレーション図とチャネル劣化</h2>
+      
+      <div class="subsection">
+        <h3>チャネルパラメータ</h3>
+        <div class="control-row">
+          <label>SNR (dB)</label>
+          <input type="range" min="-5" max="30" value="30" step="1" id="snrSlider" />
+          <span id="snrDisplay">30 dB</span>
+        </div>
+        <div class="info-box">
+          <strong>SNRの影響:</strong> 受信コンスタレーションの点の広がりとBER曲線に反映されます。30 dB以上は理想的、10 dB以下は厳しい通信環境です。
+        </div>
+        
+        <div class="control-row">
+          <label>位相オフセット (度)</label>
+          <input type="range" min="-180" max="180" value="0" step="5" id="phaseSlider" />
+          <span id="phaseDisplay">0°</span>
+        </div>
+        <div class="info-box">
+          <strong>位相オフセットの影響:</strong> 受信コンスタレーションが回転します。搬送波再生（キャリア同期）の不完全性をシミュレート。QPSKでは90°ごとに位相曖昧性が発生します。
+        </div>
+      </div>
+      
+      <div class="grid-2">
+        <div>
+          <h3>送信側（理想）</h3>
+          <div class="canvas-container">
+            <canvas id="constellationTx" width="320" height="320"></canvas>
+          </div>
+          <p style="font-size: 13px; color: #73726c;">各点の上のラベルはビット列を示します</p>
+        </div>
+        <div>
+          <h3>受信側（ノイズ+位相誤差）</h3>
+          <div class="canvas-container">
+            <canvas id="constellationRx" width="320" height="320"></canvas>
+          </div>
+          <p style="font-size: 13px; color: #73726c;">500点をランダムプロット。SNRが低いほど広がります</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>ビット列入力と変調</h2>
+      <div class="control-row">
+        <input type="text" id="bitInput" placeholder="例: 10110100" />
+        <button id="btnEncode">変調</button>
+        <button id="btnRandom">ランダム生成</button>
+      </div>
+      <div id="encodedResult" style="margin-top: 1rem; font-size: 13px;"></div>
+    </div>
+    
+    <div class="section">
+      <h2>波形表示とフィルタ</h2>
+      
+      <div class="subsection">
+        <h3>フィルタ設定</h3>
+        <div class="control-row">
+          <label>ロールオフ係数 (α)</label>
+          <input type="range" min="0" max="1" value="0.5" step="0.1" id="rolloffSlider" />
+          <span id="rolloffDisplay">0.5</span>
+        </div>
+        <div class="control-row">
+          <label>
+            <input type="checkbox" id="filterToggle"> ルートロールオフフィルタ適用
+          </label>
+        </div>
+        <div class="info-box">
+          <strong>ロールオフフィルタ:</strong> α=0は理想的だが実現不可能、α=0.5は実用的、α=1.0は緩やか。LTEではα=0.35程度が使われます。
+        </div>
+      </div>
+      
+      <h3>時間領域波形（I/Q成分）</h3>
+      <div class="chart-wrapper">
+        <canvas id="waveformChart"></canvas>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>アイダイアグラムとタイミング同期</h2>
+      
+      <div class="subsection">
+        <h3>タイミングパラメータ</h3>
+        <div class="control-row">
+          <label>タイミング誤差</label>
+          <input type="range" min="0" max="0.5" value="0" step="0.05" id="timingSlider" />
+          <span id="timingDisplay">0.00</span>
+        </div>
+        <div class="info-box">
+          <strong>タイミング誤差の影響:</strong> アイダイアグラムのサンプリング点（赤い破線）がずれます。0=理想的（アイの中心）、0.5=最悪（シンボル遷移点）。実際の受信機では、このタイミングを自動調整する「タイミング回復回路」が必要です。
+        </div>
+      </div>
+      
+      <h3>アイダイアグラム</h3>
+      <div class="canvas-container">
+        <canvas id="eyeDiagram" width="400" height="300"></canvas>
+      </div>
+      <div class="info-box">
+        <strong>アイダイアグラムの見方:</strong><br>
+        ・<strong>アイの開口度</strong>: 大きいほど信号とノイズの分離が良好<br>
+        ・<strong>サンプリング点（赤破線）</strong>: 理想的にはアイの中心に配置<br>
+        ・<strong>軌跡の太さ</strong>: 細いほどノイズが少ない<br>
+        ・<strong>交差点の収束</strong>: 中央で収束するほど同期が良好
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>BER性能曲線</h2>
+      <div class="chart-wrapper">
+        <canvas id="berChart"></canvas>
+      </div>
+      <div class="info-box">
+        <strong>BER基準:</strong> 1e-3=音声通信で許容可能、1e-5=データ通信の最低ライン、1e-6=良好、1e-9=高品質（光ファイバー）<br>
+        高次変調（256QAMなど）は高速伝送できますが、同じBERを達成するにはより高いSNRが必要です。
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <script>
+    let currentMode = 'BPSK';
+    let M = 2;
+    let bitsPerSym = 1;
+    let useGray = false;
+    let snrDb = 30;
+    let phaseOffset = 0;
+    let timingError = 0;
+    let rolloffAlpha = 0.5;
+    let useFilter = false;
+    let encodedData = [];
+    let constellation = [];
+    
+    const colors = {
+      primary: '#3266ad',
+      secondary: '#1d9e75',
+      accent: '#d85a30',
+      highlight: '#d4537e'
+    };
+    
+    const modSchemes = {
+      'BPSK': { M: 2, bits: 1, type: 'PSK' },
+      'QPSK': { M: 4, bits: 2, type: 'PSK' },
+      '8PSK': { M: 8, bits: 3, type: 'PSK' },
+      '16PSK': { M: 16, bits: 4, type: 'PSK' },
+      '16QAM': { M: 16, bits: 4, type: 'QAM' },
+      '32QAM': { M: 32, bits: 5, type: 'QAM' },
+      '64QAM': { M: 64, bits: 6, type: 'QAM' },
+      '128QAM': { M: 128, bits: 7, type: 'QAM' },
+      '256QAM': { M: 256, bits: 8, type: 'QAM' }
+    };
+    
+    function toggleGlossary() {
+      const glossary = document.getElementById('glossary');
+      glossary.classList.toggle('open');
+    }
+    
+    function grayCode(n, bits) {
+      return n ^ (n >> 1);
+    }
+    
+    function grayDecode(gray, bits) {
+      let n = gray;
+      for (let i = 1; i < bits; i++) {
+        n ^= gray >> i;
+      }
+      return n;
+    }
+    
+    function generateConstellation(mode, gray) {
+      const scheme = modSchemes[mode];
+      const points = [];
+      
+      if (scheme.type === 'PSK') {
+        const angleOffset = mode === 'BPSK' ? 0 : (mode === 'QPSK' ? Math.PI / 4 : 0);
+        for (let i = 0; i < scheme.M; i++) {
+          const idx = gray ? grayDecode(i, scheme.bits) : i;
+          const angle = angleOffset + (2 * Math.PI * idx / scheme.M);
+          points.push({
+            I: Math.cos(angle),
+            Q: Math.sin(angle),
+            bits: i.toString(2).padStart(scheme.bits, '0')
+          });
+        }
+      } else {
+        const sqrtM = Math.sqrt(scheme.M);
+        const levels = Math.round(sqrtM);
+        const step = 2 / (levels - 1);
+        
+        for (let i = 0; i < scheme.M; i++) {
+          const row = Math.floor(i / levels);
+          const col = i % levels;
+          const idx = gray ? grayDecode(i, scheme.bits) : i;
+          const I = -1 + col * step;
+          const Q = 1 - row * step;
+          const norm = Math.sqrt(I * I + Q * Q);
+          points.push({
+            I: I / (norm || 1) * 0.7,
+            Q: Q / (norm || 1) * 0.7,
+            bits: i.toString(2).padStart(scheme.bits, '0')
+          });
+        }
+      }
+      
+      return points;
+    }
+    
+    function addNoise(I, Q, snrDb) {
+      if (snrDb >= 30) return { I, Q };
+      const snrLinear = Math.pow(10, snrDb / 10);
+      const noisePower = 1 / (2 * snrLinear);
+      const noiseStd = Math.sqrt(noisePower);
+      
+      const noiseI = boxMuller() * noiseStd;
+      const noiseQ = boxMuller() * noiseStd;
+      
+      return { I: I + noiseI, Q: Q + noiseQ };
+    }
+    
+    function applyPhaseOffset(I, Q, phaseDeg) {
+      const phaseRad = phaseDeg * Math.PI / 180;
+      const cos = Math.cos(phaseRad);
+      const sin = Math.sin(phaseRad);
+      return {
+        I: I * cos - Q * sin,
+        Q: I * sin + Q * cos
+      };
+    }
+    
+    function boxMuller() {
+      const u1 = Math.random();
+      const u2 = Math.random();
+      return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+    }
+    
+    function drawConstellation(canvasId, points, noisy = false) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+      const center = w / 2;
+      const scale = w * 0.35;
+      
+      ctx.clearRect(0, 0, w, h);
+      
+      const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+      const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+      const textColor = isDark ? '#e1e1dc' : '#2c2c2a';
+      
+      ctx.strokeStyle = gridColor;
+      ctx.lineWidth = 0.5;
+      for (let r = 0.5; r <= 1; r += 0.5) {
+        ctx.beginPath();
+        ctx.arc(center, center, scale * r, 0, 2 * Math.PI);
+        ctx.stroke();
+      }
+      
+      ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, center);
+      ctx.lineTo(w, center);
+      ctx.moveTo(center, 0);
+      ctx.lineTo(center, h);
+      ctx.stroke();
+      
+      ctx.fillStyle = textColor;
+      ctx.font = '11px sans-serif';
+      ctx.fillText('I', w - 15, center - 8);
+      ctx.fillText('Q', center + 8, 15);
+      
+      if (noisy) {
+        const numNoise = 500;
+        ctx.globalAlpha = 0.3;
+        for (let n = 0; n < numNoise; n++) {
+          const point = points[Math.floor(Math.random() * points.length)];
+          let noised = addNoise(point.I, point.Q, snrDb);
+          noised = applyPhaseOffset(noised.I, noised.Q, phaseOffset);
+          const x = center + noised.I * scale;
+          const y = center - noised.Q * scale;
+          
+          ctx.beginPath();
+          ctx.arc(x, y, 1.5, 0, 2 * Math.PI);
+          ctx.fillStyle = colors.primary;
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+      
+      points.forEach(p => {
+        let pos = { I: p.I, Q: p.Q };
+        if (noisy) {
+          pos = applyPhaseOffset(pos.I, pos.Q, phaseOffset);
+        }
+        const x = center + pos.I * scale;
+        const y = center - pos.Q * scale;
+        
+        ctx.beginPath();
+        ctx.arc(x, y, noisy ? 4 : 5, 0, 2 * Math.PI);
+        ctx.fillStyle = noisy ? colors.highlight : colors.accent;
+        ctx.fill();
+        
+        if (!noisy) {
+          ctx.fillStyle = textColor;
+          ctx.font = '10px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(p.bits, x, y - 10);
+        }
+      });
+    }
+    
+    function drawEyeDiagram() {
+      const canvas = document.getElementById('eyeDiagram');
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+      
+      ctx.clearRect(0, 0, w, h);
+      
+      if (encodedData.length < 2) {
+        const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+        ctx.fillStyle = isDark ? '#b4b2a9' : '#73726c';
+        ctx.font = '14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('ビット列を入力して変調してください', w / 2, h / 2);
+        return;
+      }
+      
+      const samplesPerSymbol = 32;
+      const symbolsToDisplay = Math.min(encodedData.length, 20);
+      
+      const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+      ctx.strokeStyle = isDark ? 'rgba(50, 102, 173, 0.3)' : 'rgba(50, 102, 173, 0.4)';
+      ctx.lineWidth = 1;
+      
+      for (let s = 0; s < symbolsToDisplay - 1; s++) {
+        const p1 = constellation[encodedData[s].symbol];
+        const p2 = constellation[encodedData[s + 1].symbol];
+        
+        ctx.beginPath();
+        for (let i = 0; i <= samplesPerSymbol; i++) {
+          const t = i / samplesPerSymbol;
+          const tShifted = (t + timingError) % 1.0;
+          const I = p1.I + (p2.I - p1.I) * tShifted;
+          const x = (i / samplesPerSymbol) * w;
+          const y = h / 2 - I * h * 0.3;
+          
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+      
+      const sampleX = w * (0.5 + timingError);
+      ctx.strokeStyle = colors.highlight;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(sampleX, 0);
+      ctx.lineTo(sampleX, h);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, h / 2);
+      ctx.lineTo(w, h / 2);
+      ctx.stroke();
+      
+      ctx.fillStyle = colors.highlight;
+      ctx.font = '11px sans-serif';
+      ctx.fillText('サンプリング点', sampleX + 5, 15);
+    }
+    
+    function calculateBER(snrDb, mode) {
+      const scheme = modSchemes[mode];
+      if (scheme.type === 'PSK') {
+        const snrLinear = Math.pow(10, snrDb / 10);
+        const berApprox = 0.5 * Math.exp(-snrLinear);
+        return Math.max(1e-8, Math.min(0.5, berApprox));
+      } else {
+        const snrLinear = Math.pow(10, snrDb / 10);
+        const k = scheme.bits;
+        const berApprox = (2 * (1 - 1 / Math.sqrt(scheme.M)) / k) * 
+                         0.5 * Math.exp(-1.5 * snrLinear / (scheme.M - 1));
+        return Math.max(1e-8, Math.min(0.5, berApprox));
+      }
+    }
+    
+    let waveformChart, berChart;
+    
+    function updateWaveform() {
+      const canvas = document.getElementById('waveformChart');
+      const ctx = canvas.getContext('2d');
+      
+      if (waveformChart) waveformChart.destroy();
+      
+      if (encodedData.length === 0) {
+        waveformChart = new Chart(ctx, {
+          type: 'line',
+          data: { labels: [], datasets: [] },
+          options: { 
+            responsive: true, 
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            }
+          }
+        });
+        return;
+      }
+      
+      const samplesPerSymbol = 32;
+      const labels = [];
+      const iData = [];
+      const qData = [];
+      
+      for (let i = 0; i < encodedData.length; i++) {
+        const p = constellation[encodedData[i].symbol];
+        for (let s = 0; s < samplesPerSymbol; s++) {
+          labels.push((i * samplesPerSymbol + s).toString());
+          iData.push(p.I);
+          qData.push(p.Q);
+        }
+      }
+      
+      waveformChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            { label: 'I成分', data: iData, borderColor: colors.primary, borderWidth: 2, pointRadius: 0, stepped: true },
+            { label: 'Q成分', data: qData, borderColor: colors.secondary, borderWidth: 2, pointRadius: 0, stepped: true }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { title: { display: true, text: '時間' }, ticks: { maxTicksLimit: 10 } },
+            y: { title: { display: true, text: '振幅' } }
+          },
+          plugins: { legend: { display: true, position: 'top' } }
+        }
+      });
+    }
+    
+    function updateBERChart() {
+      const canvas = document.getElementById('berChart');
+      const ctx = canvas.getContext('2d');
+      
+      if (berChart) berChart.destroy();
+      
+      const snrRange = [];
+      const berData = [];
+      
+      for (let snr = 0; snr <= 25; snr++) {
+        snrRange.push(snr);
+        berData.push(calculateBER(snr, currentMode));
+      }
+      
+      berChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: snrRange,
+          datasets: [{
+            label: currentMode + ' BER',
+            data: berData,
+            borderColor: colors.primary,
+            borderWidth: 2,
+            pointRadius: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { title: { display: true, text: 'SNR (dB)' } },
+            y: { 
+              type: 'logarithmic',
+              title: { display: true, text: 'BER' },
+              min: 1e-8,
+              max: 0.5
+            }
+          },
+          plugins: { legend: { display: true } }
+        }
+      });
+    }
+    
+    function setMode(mode) {
+      currentMode = mode;
+      const scheme = modSchemes[mode];
+      M = scheme.M;
+      bitsPerSym = scheme.bits;
+      
+      document.getElementById('modType').textContent = mode;
+      document.getElementById('numSymbols').textContent = M;
+      document.getElementById('bitsPerSymbol').textContent = bitsPerSym;
+      
+      document.querySelectorAll('.button-group button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.getElementById('btn' + mode).classList.add('active');
+      
+      updateAll();
+    }
+    
+    function updateAll() {
+      constellation = generateConstellation(currentMode, useGray);
+      drawConstellation('constellationTx', constellation, false);
+      drawConstellation('constellationRx', constellation, true);
+      
+      document.getElementById('grayStatus').textContent = useGray ? 'ON' : 'OFF';
+      document.getElementById('snrValue').textContent = snrDb >= 30 ? '∞' : snrDb;
+      
+      const ber = calculateBER(snrDb, currentMode);
+      document.getElementById('berValue').textContent = ber.toExponential(2);
+      
+      updateWaveform();
+      updateBERChart();
+      drawEyeDiagram();
+    }
+    
+    function encodeBits() {
+      const input = document.getElementById('bitInput').value.replace(/[^01]/g, '');
+      if (!input) return;
+      
+      encodedData = [];
+      for (let i = 0; i < input.length; i += bitsPerSym) {
+        const chunk = input.slice(i, i + bitsPerSym);
+        if (chunk.length === bitsPerSym) {
+          const symbol = parseInt(chunk, 2);
+          encodedData.push({ bits: chunk, symbol });
+        }
+      }
+      
+      const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+      const chipBg = isDark ? '#3a3a38' : '#f1efe8';
+      const result = encodedData.map(d => 
+        `<span style="font-family: monospace; background: ${chipBg}; padding: 4px 8px; border-radius: 4px; margin: 2px;">${d.bits}→S${d.symbol}</span>`
+      ).join(' ');
+      document.getElementById('encodedResult').innerHTML = `変調結果: ${result}`;
+      
+      updateWaveform();
+      drawEyeDiagram();
+    }
+    
+    function generateRandom() {
+      const length = Math.floor(Math.random() * 5 + 3) * bitsPerSym;
+      let bits = '';
+      for (let i = 0; i < length; i++) {
+        bits += Math.random() < 0.5 ? '0' : '1';
+      }
+      document.getElementById('bitInput').value = bits;
+      encodeBits();
+    }
+    
+    Object.keys(modSchemes).forEach(mode => {
+      document.getElementById('btn' + mode).addEventListener('click', () => setMode(mode));
+    });
+    
+    document.getElementById('grayCodeToggle').addEventListener('change', (e) => {
+      useGray = e.target.checked;
+      updateAll();
+    });
+    
+    document.getElementById('snrSlider').addEventListener('input', (e) => {
+      snrDb = parseFloat(e.target.value);
+      document.getElementById('snrDisplay').textContent = snrDb + ' dB';
+      updateAll();
+    });
+    
+    document.getElementById('phaseSlider').addEventListener('input', (e) => {
+      phaseOffset = parseFloat(e.target.value);
+      document.getElementById('phaseDisplay').textContent = phaseOffset + '°';
+      updateAll();
+    });
+    
+    document.getElementById('timingSlider').addEventListener('input', (e) => {
+      timingError = parseFloat(e.target.value);
+      document.getElementById('timingDisplay').textContent = timingError.toFixed(2);
+      drawEyeDiagram();
+    });
+    
+    document.getElementById('rolloffSlider').addEventListener('input', (e) => {
+      rolloffAlpha = parseFloat(e.target.value);
+      document.getElementById('rolloffDisplay').textContent = rolloffAlpha.toFixed(1);
+    });
+    
+    document.getElementById('filterToggle').addEventListener('change', (e) => {
+      useFilter = e.target.checked;
+      updateWaveform();
+    });
+    
+    document.getElementById('btnEncode').addEventListener('click', encodeBits);
+    document.getElementById('btnRandom').addEventListener('click', generateRandom);
+    
+    window.addEventListener('load', () => {
+      setMode('BPSK');
+    });
+  </script>
+</body>
+</html>
