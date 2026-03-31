@@ -3,7 +3,7 @@
 made by Claude (Anthropic)  
 
 ページはこちら↓  
-https://confinature.github.io/modulation_simulator/
+https://confinature.github.io/modulation_simulator/  
 PSK/QAM変調、ノイズ解析、BER計算、フィルタリング、アイダイアグラム、同期シミュレーションを統合した包括的な通信システムシミュレーターです。
 
 ## 概要
